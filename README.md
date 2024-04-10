@@ -27,6 +27,7 @@ dart ./main.dart \
 	--ignore-folders=.github \
 	--ignore-folders=build \
 	--ignore-folders=.idea \
+	--ignore-folders=.git \
 	--ignore-extensions=lock \
 	--ignore-files=LICENSE.md \
 	--ignore-files=makefile \
@@ -40,7 +41,7 @@ Output file: ai.txt
 ```
 # Usage
 
-Download the binary in releases than run on terminal: `./tog --folder-recursive=/path/to/any/folder`
+Download the binary in (releases)[./releases] than run on terminal: `./tog --folder-recursive=/path/to/any/folder`
 
 ```
 --folder               Specifies a folder to merge files (can be used multiple times)

@@ -13,11 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: dart-lang/setup-dart@v1
+      - run: make test
 
-      - run: dart pub get
-      # - run: dart format --output=none --set-exit-if-changed .
-      - run: dart analyze --fatal-warnings
-#      - run: dart test --exclude-tags=skip-ci
   build:
     needs: test
     runs-on: ${{ matrix.os }}
@@ -25,31 +22,15 @@ jobs:
       contents: write
     strategy:
       matrix:
-         os: [ubuntu-latest, macos-latest, windows-latest]
-#        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Setup Dart SDK
         uses: dart-lang/setup-dart@v1
-      - name: Get dependencies
-        run: dart pub get
-
-      - name: Compile on ${{ matrix.os }}
-        if: runner.os != 'Windows' && startsWith(github.ref, 'refs/tags/v')
-        run: mkdir -p build && dart compile exe main.dart -o build/tog-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)
-      - name: Gzip compiled file on ${{ matrix.os }}
-        if: runner.os != 'Windows' && startsWith(github.ref, 'refs/tags/v')
-        run: gzip --best --keep build/tog-$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m)
-
-      - name: Compile on Windows
-        if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/v')
-        run: mkdir -p build && dart compile exe main.dart -o build/tog-windows-${{ runner.arch }}
-      - name: Gzip compiled file on Windows
-        if: runner.os == 'Windows' && startsWith(github.ref, 'refs/tags/v')
-        run: gzip --best --keep build/tog-windows-${{ runner.arch }}
-
-      - name: Release build for ${{ matrix.os }}
+      - name: Build
+        run: make build
+      - name: Release build
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
@@ -57,11 +38,3 @@ jobs:
           fail_on_unmatched_files: false
           append_body: true
           files: build/tog-*
-#  publish:
-#    needs: test
-#    if: startsWith(github.ref, 'refs/tags/v')
-#    permissions:
-#      id-token: write # This is required for authentication using OIDC
-#    uses: dart-lang/setup-dart/.github/workflows/publish.yml@v1
-#    # with:
-#    #   working-directory: path/to/package/within/repository
