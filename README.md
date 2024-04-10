@@ -41,7 +41,7 @@ Output file: ai.txt
 ```
 # Usage
 
-Download the binary in [releases](./releases) than run on terminal: `./tog --folder-recursive=/path/to/any/folder`
+Download the binary in [releases](//github.com/insign/together/releases) than run on terminal: `./tog --folder-recursive=/path/to/any/folder`
 
 ```
 --folder               Specifies a folder to merge files (can be used multiple times)
