@@ -1,11 +1,11 @@
 import 'dart:io';
 import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
+import 'package:glob/glob.dart';
+import 'package:glob/list_local_fs.dart';
 
-void main(List<String> arguments) {
+Future<void> main(List<String> arguments) async {
   final parser = ArgParser()
-    ..addMultiOption('folder', help: 'Specifies a folder to merge files (can be used multiple times)')
-    ..addMultiOption('folder-recursive', help: 'Specifies a folder to merge files recursively (can be used multiple times)')
     ..addOption('output', defaultsTo: 'output.txt', help: 'Specifies the output file name')
     ..addOption('ignore-extensions', help: 'Specifies file extensions to ignore (comma separated)')
     ..addMultiOption('ignore-folders', help: 'Specifies folders to globally ignore (can be used multiple times)')
@@ -13,70 +13,96 @@ void main(List<String> arguments) {
 
   final argResults = parser.parse(arguments);
 
-  final folders = argResults['folder'] as List<String>;
-  final recursiveFolders = argResults['folder-recursive'] as List<String>;
+  final paths = argResults.rest;
   final outputFile = argResults['output'] as String;
   final ignoreExtensions = (argResults['ignore-extensions'] as String? ?? '').split(',');
   final ignoreFolders = argResults['ignore-folders'] as List<String>;
   final ignoreFiles = argResults['ignore-files'] as List<String>;
 
-  if (folders.isEmpty && recursiveFolders.isEmpty) {
+  if (paths.isEmpty) {
+    print('Usage: dart run main.dart [options] <path1> <path2> ...');
     print(parser.usage);
     exit(0);
   }
 
   final outputFileStream = File(outputFile).openWrite();
 
-  for (final folder in folders) {
-    processFolder(folder, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles, recursive: false);
-  }
+  final futures = paths.map((pathPattern) {
+    final absolutePathPattern = path.isAbsolute(pathPattern)
+        ? pathPattern
+        : path.join(Directory.current.path, pathPattern);
+    return processPath(absolutePathPattern, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles);
+  });
 
-  for (final folder in recursiveFolders) {
-    processFolder(folder, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles, recursive: true);
-  }
+  await Future.wait(futures);
 
-  outputFileStream.close();
+  await outputFileStream.close();
   print('\nOutput file: $outputFile');
 }
 
-void processFolder(String folderPath, IOSink outputFileStream, String outputFile,
-    List<String> ignoreExtensions, List<String> ignoreFolders, List<String> ignoreFiles, {bool recursive = false}) {
-  final folder = Directory(folderPath);
+Future<void> processPath(String pathPattern, IOSink outputFileStream, String outputFile,
+    List<String> ignoreExtensions, List<String> ignoreFolders, List<String> ignoreFiles) async {
+  final glob = Glob(pathPattern);
+  final rootDir = path.dirname(pathPattern);
 
-  for (final file in folder.listSync(recursive: recursive).whereType<File>()) {
-    final filename = path.basename(file.path);
-
-    if (file.path == outputFile || path.join(folderPath, outputFile) == file.path) {
-      continue;
-    }
-
-    if (ignoreFiles.contains(filename)) {
-      continue;
-    }
-
-    final String extWithDot = path.extension(file.path);
-    final String extension = extWithDot.isNotEmpty ? extWithDot.substring(1) : 'xxxx';
-
-    if (ignoreExtensions.contains(extension)) {
-      continue;
-    }
-
-    if (ignoreFolders.any((ignoredFolder) => file.path.contains(ignoredFolder))) {
-      continue;
-    }
-
-    try {
-      final String fileContent = file.readAsStringSync();
-      print('Adding file ${file.path}');
-      outputFileStream.writeln('FILE: ${file.path}');
-      outputFileStream.write(fileContent);
-      outputFileStream.writeln();
-    } catch (e) {
-      if (e is FileSystemException) {
-        print('Skipping file ${file.path} due to encoding issues.');
-      } else {
-        rethrow;
+  // Process files in the root directory
+  final rootDirEntity = Directory(rootDir);
+  if (await rootDirEntity.exists()) {
+    final entities = await rootDirEntity.list().toList();
+    final fileFutures = entities.map((entity) async {
+      if (entity is File && glob.matches(entity.path)) {
+        await processFile(entity, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles);
       }
+    });
+    await Future.wait(fileFutures);
+  }
+
+  // Process files in subdirectories
+  final entities = await glob.list().toList();
+  final futures = entities.map((entity) async {
+    if (entity is File) {
+      await processFile(entity as File, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles);
+    } else if (entity is Directory) {
+      await processPath(path.join(entity.path, '**'), outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles);
+    }
+  });
+  await Future.wait(futures);
+}
+
+Future<void> processFile(File file, IOSink outputFileStream, String outputFile,
+    List<String> ignoreExtensions, List<String> ignoreFolders, List<String> ignoreFiles) async {
+  final filename = path.basename(file.path);
+
+  if (file.path == outputFile || path.basename(file.path) == outputFile) {
+    return;
+  }
+
+  if (ignoreFiles.contains(filename)) {
+    return;
+  }
+
+  final String extWithDot = path.extension(file.path);
+  final String extension = extWithDot.isNotEmpty ? extWithDot.substring(1) : '';
+
+  if (ignoreExtensions.contains(extension)) {
+    return;
+  }
+
+  if (ignoreFolders.any((ignoredFolder) => file.path.contains(ignoredFolder))) {
+    return;
+  }
+
+  try {
+    final String fileContent = await file.readAsString();
+    print('Adding file ${file.path}');
+    outputFileStream.writeln('FILE: ${file.path}');
+    outputFileStream.write(fileContent);
+    outputFileStream.writeln();
+  } catch (e) {
+    if (e is FileSystemException) {
+      print('Skipping file ${file.path} due to encoding issues.');
+    } else {
+      rethrow;
     }
   }
 }

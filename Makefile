@@ -21,7 +21,7 @@ dev:
 test:
 	dart pub get
 	dart analyze --fatal-warnings
-	# dart test --exclude-tags=skip-ci
+	dart test tests.dart --exclude-tags=skip-ci
 
 build:
 	dart pub get
