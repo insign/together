@@ -1,4 +1,4 @@
-.PHONY: test build clean ai dev
+.PHONY: test build clean ai dev bin
 
 ai:
 	dart ./main.dart \
@@ -36,3 +36,6 @@ endif
 
 clean:
 	rm -rf build
+
+bin:
+	dart compile exe -o ~/bin/tog main.dart
