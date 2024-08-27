@@ -75,5 +75,4 @@ Output file: ai.txt
 ### Compile
 `make` will compile the binary for your OS "~/bin/tog"
 
-`./tog path/to/any/folder path/to/another/folder/* specific/file.txt`
-```
+`tog path/to/any/folder path/to/another/folder/* specific/file.txt`
