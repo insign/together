@@ -73,7 +73,7 @@ Output file: ai.txt
 `dart run main.dart path/to/any/folder path/to/another/folder/* specific/file.txt`
 
 ### Compile
-`dart compile exe -o tog main.dart`
+`make` will compile the binary for your OS "~/bin/tog"
 
 `./tog path/to/any/folder path/to/another/folder/* specific/file.txt`
 ```

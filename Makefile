@@ -1,5 +1,6 @@
 .PHONY: test build clean ai dev bin
 .DEFAULT_GOAL := bin
+NICK = tog
 
 ai:
 	dart ./main.dart \
@@ -17,7 +18,7 @@ ai:
 
 
 dev:
-	dart compile exe -o ~/bin/tog main.dart
+	dart compile exe -o ~/bin/$(NICK) main.dart
 
 test:
 	dart pub get
@@ -28,15 +29,15 @@ build:
 	dart pub get
 	mkdir -p build
 ifeq ($(OS),Windows_NT)
-	dart compile exe main.dart -o build/tog-windows-$(PROCESSOR_ARCHITECTURE)
-	gzip --best --keep build/tog-windows-$(PROCESSOR_ARCHITECTURE)
+	dart compile exe main.dart -o build/$(NICK)-windows-$(PROCESSOR_ARCHITECTURE)
+	gzip --best --keep build/$(NICK)-windows-$(PROCESSOR_ARCHITECTURE)
 else
-	dart compile exe main.dart -o build/tog-$$(uname -s | tr '[:upper:]' '[:lower:]')-$$(uname -m)
-	gzip --best --keep build/tog-$$(uname -s | tr '[:upper:]' '[:lower:]')-$$(uname -m)
+	dart compile exe main.dart -o build/$(NICK)-$$(uname -s | tr '[:upper:]' '[:lower:]')-$$(uname -m)
+	gzip --best --keep build/$(NICK)-$$(uname -s | tr '[:upper:]' '[:lower:]')-$$(uname -m)
 endif
 
 clean:
 	rm -rf build
 
 bin:
-	dart compile exe -o ~/bin/tog main.dart
+	dart compile exe -o ~/bin/$(NICK) main.dart
