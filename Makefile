@@ -1,4 +1,5 @@
 .PHONY: test build clean ai dev bin
+.DEFAULT_GOAL := make
 
 ai:
 	dart ./main.dart \
