@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := bin
 NICK = tog
 
-ai:
+tog:
 	dart ./main.dart \
 	--output=ai.txt \
 	--folder-recursive="." \
