@@ -6,31 +6,21 @@ import 'package:glob/list_local_fs.dart';
 
 Future<void> main(List<String> arguments) async {
   final parser = ArgParser()
-    ..addOption('output',
-        defaultsTo: 'output.txt', help: 'Specifies the output file name')
-    ..addOption('ignore-extensions',
-        help: 'Specifies file extensions to ignore (comma separated)')
-    ..addMultiOption('ignore-folders',
-        help:
-            'Specifies folders to globally ignore (can be used multiple times)')
-    ..addMultiOption('ignore-files',
-        help: 'Specifies files to globally ignore (can be used multiple times)')
+    ..addOption('output', defaultsTo: 'output.txt', help: 'Specifies the output file name')
+    ..addOption('ignore-extensions', help: 'Specifies file extensions to ignore (comma separated)')
+    ..addMultiOption('ignore-folders', help: 'Specifies folders to globally ignore (can be used multiple times)')
+    ..addMultiOption('ignore-files', help: 'Specifies files to globally ignore (can be used multiple times)')
     ..addFlag('gitignore',
-        negatable: false,
-        help:
-            'Ignores files and directories based on the .gitignore file in the current directory.');
+        negatable: false, help: 'Ignores files and directories based on the .gitignore file in the current directory.');
 
   final argResults = parser.parse(arguments);
 
   final paths = argResults.rest;
   final outputFile = argResults['output'] as String;
-  final ignoreExtensions = (argResults['ignore-extensions'] as String? ?? '')
-      .split(',')
-      .where((s) => s.isNotEmpty)
-      .toList();
+  final ignoreExtensions =
+      (argResults['ignore-extensions'] as String? ?? '').split(',').where((s) => s.isNotEmpty).toList();
   final ignoreFolders = argResults['ignore-folders'] as List<String>;
-  final ignoreFiles =
-      (argResults['ignore-files'] as List<String>).toList(); // Make it mutable
+  final ignoreFiles = (argResults['ignore-files'] as List<String>).toList(); // Make it mutable
 
   if (paths.isEmpty) {
     print('Usage: dart run main.dart [options] <path1> <path2> ...');
@@ -61,8 +51,7 @@ Future<void> main(List<String> arguments) async {
         }
       }
     } else {
-      print(
-          "Warning: --gitignore flag was used, but .gitignore file not found in the current directory.");
+      print("Warning: --gitignore flag was used, but .gitignore file not found in the current directory.");
     }
   }
 
@@ -73,15 +62,8 @@ Future<void> main(List<String> arguments) async {
   final processedFilePaths = <String>{};
 
   final futures = paths.map((pathPattern) {
-    return processPath(
-        pathPattern,
-        outputFileStream,
-        outputFile,
-        ignoreExtensions,
-        ignoreFolders,
-        ignoreFiles,
-        gitignoreGlobs,
-        processedFilePaths);
+    return processPath(pathPattern, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles,
+        gitignoreGlobs, processedFilePaths);
   });
 
   await Future.wait(futures);
@@ -105,15 +87,8 @@ Future<void> processPath(
   // glob.list() efficiently finds all matching entities without needing manual recursion.
   await for (final entity in glob.list()) {
     if (entity is File) {
-      await processFile(
-          entity as File,
-          outputFileStream,
-          outputFile,
-          ignoreExtensions,
-          ignoreFolders,
-          ignoreFiles,
-          gitignoreGlobs,
-          processedFilePaths);
+      await processFile(entity as File, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles,
+          gitignoreGlobs, processedFilePaths);
     }
   }
 }
