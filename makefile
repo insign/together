@@ -3,7 +3,7 @@
 NICK = tog
 
 tog:
-	tog ./* --ignore-folders=.dart_tool,.github,build,.idea,.git --ignore-extensions=lock --ignore-files=LICENSE.md,makefile,.gitignore
+	tog * --ignore-folders=.dart_tool,.github,build,.idea,.git --ignore-extensions=lock --ignore-files=LICENSE.md,makefile,.gitignore
 
 dev:
 	dart compile exe -o ~/bin/$(NICK) main.dart

@@ -14,8 +14,11 @@ Future<void> main(List<String> arguments) async {
         help:
             'Specifies folders to globally ignore (can be used multiple times)')
     ..addMultiOption('ignore-files',
+        help: 'Specifies files to globally ignore (can be used multiple times)')
+    ..addFlag('gitignore',
+        negatable: false,
         help:
-            'Specifies files to globally ignore (can be used multiple times)');
+            'Ignores files and directories based on the .gitignore file in the current directory.');
 
   final argResults = parser.parse(arguments);
 
@@ -35,6 +38,34 @@ Future<void> main(List<String> arguments) async {
     exit(0);
   }
 
+  final gitignoreGlobs = <Glob>[];
+  if (argResults['gitignore'] as bool) {
+    const gitignorePath = '.gitignore';
+    final gitignoreFile = File(gitignorePath);
+
+    if (await gitignoreFile.exists()) {
+      final lines = await gitignoreFile.readAsLines();
+      for (var line in lines) {
+        line = line.trim();
+        if (line.isNotEmpty && !line.startsWith('#')) {
+          var pattern = line;
+          if (pattern.endsWith('/')) {
+            pattern = '$pattern**';
+          }
+          // Patterns without slashes should match files anywhere in the tree.
+          if (!pattern.contains('/')) {
+            gitignoreGlobs.add(Glob('**/$pattern', caseSensitive: false));
+          }
+          // Add the original pattern as well for paths relative to the root.
+          gitignoreGlobs.add(Glob(pattern, caseSensitive: false));
+        }
+      }
+    } else {
+      print(
+          "Warning: --gitignore flag was used, but .gitignore file not found in the current directory.");
+    }
+  }
+
   // Ensure the output file itself is never processed.
   ignoreFiles.add(path.basename(outputFile));
 
@@ -42,8 +73,15 @@ Future<void> main(List<String> arguments) async {
   final processedFilePaths = <String>{};
 
   final futures = paths.map((pathPattern) {
-    return processPath(pathPattern, outputFileStream, outputFile,
-        ignoreExtensions, ignoreFolders, ignoreFiles, processedFilePaths);
+    return processPath(
+        pathPattern,
+        outputFileStream,
+        outputFile,
+        ignoreExtensions,
+        ignoreFolders,
+        ignoreFiles,
+        gitignoreGlobs,
+        processedFilePaths);
   });
 
   await Future.wait(futures);
@@ -59,6 +97,7 @@ Future<void> processPath(
     List<String> ignoreExtensions,
     List<String> ignoreFolders,
     List<String> ignoreFiles,
+    List<Glob> gitignoreGlobs,
     Set<String> processedFilePaths) async {
   // Use case-insensitive matching for better cross-platform compatibility.
   final glob = Glob(pathPattern, caseSensitive: false);
@@ -66,8 +105,15 @@ Future<void> processPath(
   // glob.list() efficiently finds all matching entities without needing manual recursion.
   await for (final entity in glob.list()) {
     if (entity is File) {
-      await processFile(entity as File, outputFileStream, outputFile,
-          ignoreExtensions, ignoreFolders, ignoreFiles, processedFilePaths);
+      await processFile(
+          entity as File,
+          outputFileStream,
+          outputFile,
+          ignoreExtensions,
+          ignoreFolders,
+          ignoreFiles,
+          gitignoreGlobs,
+          processedFilePaths);
     }
   }
 }
@@ -79,7 +125,16 @@ Future<void> processFile(
     List<String> ignoreExtensions,
     List<String> ignoreFolders,
     List<String> ignoreFiles,
+    List<Glob> gitignoreGlobs,
     Set<String> processedFilePaths) async {
+  // Use normalized, relative path for consistent matching.
+  final relativePath = path.normalize(file.path);
+
+  // Check against .gitignore patterns first.
+  if (gitignoreGlobs.any((glob) => glob.matches(relativePath))) {
+    return;
+  }
+
   // Use the file's absolute path for reliable duplicate checking.
   final absolutePath = file.absolute.path;
   if (processedFilePaths.contains(absolutePath)) {

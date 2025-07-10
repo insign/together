@@ -126,6 +126,50 @@ void main() {
     expect(output, isNot(contains('Ignore this')));
   });
 
+  test('Handles .gitignore file', () async {
+    // Create a .gitignore file
+    final gitignoreContent = '''
+    # Comments should be ignored
+    ignored_dir/
+    *.log
+    specific_file_to_ignore.txt
+    ''';
+    final gitignoreFile = File(path.join(tempDir.path, '.gitignore'));
+    gitignoreFile.writeAsStringSync(gitignoreContent);
+
+    // Create files and directories to be ignored
+    Directory(path.join(tempDir.path, 'ignored_dir')).createSync();
+    File(path.join(tempDir.path, 'ignored_dir', 'test.txt'))
+        .writeAsStringSync('Should be ignored by dir rule');
+    File(path.join(tempDir.path, 'app.log'))
+        .writeAsStringSync('Should be ignored by extension rule');
+    File(path.join(tempDir.path, 'specific_file_to_ignore.txt'))
+        .writeAsStringSync('Should be ignored by specific file rule');
+    Directory(path.join(tempDir.path, 'lib')).createSync();
+    File(path.join(tempDir.path, 'lib', 'nested.log'))
+        .writeAsStringSync('Should be ignored by nested extension rule');
+
+    // Create files to be included
+    File(path.join(tempDir.path, 'main.dart'))
+        .writeAsStringSync('Should be included');
+    File(path.join(tempDir.path, 'lib', 'code.txt'))
+        .writeAsStringSync('Should be included also');
+
+    final result = await runApp([
+      '**/*', // Process all files recursively
+      '--output=output.txt',
+      '--gitignore', // Use the created gitignore
+    ]);
+
+    expect(result.exitCode, equals(0));
+
+    final output = File(outputFile).readAsStringSync();
+
+    expect(output, contains('Should be included'));
+    expect(output, contains('Should be included also'));
+    expect(output, isNot(contains('Should be ignored')));
+  });
+
   test('Multiple paths', () async {
     Directory(path.join(tempDir.path, 'dir1')).createSync();
     File(path.join(tempDir.path, 'dir1', 'file1.txt'))
