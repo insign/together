@@ -3,19 +3,7 @@
 NICK = tog
 
 tog:
-	dart ./main.dart \
-	--output=ai.txt \
-	--folder-recursive="." \
-	--ignore-folders=.dart_tool \
-	--ignore-folders=.github \
-	--ignore-folders=build \
-	--ignore-folders=.idea \
-	--ignore-folders=.git \
-	--ignore-extensions=lock \
-	--ignore-files=LICENSE.md \
-	--ignore-files=makefile \
-	--ignore-files=.gitignore
-
+	tog ./* --ignore-folders=.dart_tool,.github,build,.idea,.git --ignore-extensions=lock --ignore-files=LICENSE.md,makefile,.gitignore
 
 dev:
 	dart compile exe -o ~/bin/$(NICK) main.dart

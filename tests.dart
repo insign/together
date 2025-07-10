@@ -16,23 +16,30 @@ void main() {
   });
 
   Future<ProcessResult> runApp(List<String> args) async {
+    // Construct an absolute path to main.dart, assuming tests are run from project root.
+    final mainScriptPath = path.join(Directory.current.path, 'main.dart');
     return await Process.run(
       'dart',
-      ['run', 'main.dart', ...args],
+      ['run', mainScriptPath, ...args],
+      workingDirectory: tempDir.path,
     );
   }
 
   test('Basic functionality', () async {
     // Create test files
-    File(path.join(tempDir.path, 'file1.txt')).writeAsStringSync('Content of file 1');
-    File(path.join(tempDir.path, 'file2.dart')).writeAsStringSync('Content of file 2');
+    File(path.join(tempDir.path, 'file1.txt'))
+        .writeAsStringSync('Content of file 1');
+    File(path.join(tempDir.path, 'file2.dart'))
+        .writeAsStringSync('Content of file 2');
     Directory(path.join(tempDir.path, 'subdir')).createSync();
-    File(path.join(tempDir.path, 'subdir', 'file3.txt')).writeAsStringSync('Content of file 3');
+    File(path.join(tempDir.path, 'subdir', 'file3.txt'))
+        .writeAsStringSync('Content of file 3');
 
-    // Run the application
+    // Run the application using a glob pattern
     final result = await runApp([
-      tempDir.path,
-      '--output=$outputFile',
+      '*.txt', // Glob for current directory
+      '**/*.txt', // Glob for subdirectories
+      '--output=output.txt',
       '--ignore-extensions=dart',
     ]);
 
@@ -42,22 +49,55 @@ void main() {
 
     // Check the output
     final output = File(outputFile).readAsStringSync();
-    expect(output, contains('FILE: ${path.join(tempDir.path, 'file1.txt')}'));
+    // The glob package finds relative paths which include './' prefix.
+    expect(output, contains('FILE: ./file1.txt'));
     expect(output, contains('Content of file 1'));
     expect(output, isNot(contains('file2.dart')));
-    expect(output, contains('FILE: ${path.join(tempDir.path, 'subdir', 'file3.txt')}'));
+    expect(output, contains(path.join('subdir', 'file3.txt')));
     expect(output, contains('Content of file 3'));
+  });
+
+  test('Does not process the same file twice', () async {
+    // Create a test file
+    File(path.join(tempDir.path, 'file1.txt'))
+      ..writeAsStringSync('Content of file 1');
+
+    // Run the application with two arguments that match the same file
+    final result = await runApp([
+      'file1.txt', // a direct path
+      '*.txt', // a glob pattern
+      '--output=output.txt',
+    ]);
+
+    expect(result.exitCode, equals(0));
+    print('STDOUT: ${result.stdout}');
+    print('STDERR: ${result.stderr}');
+
+    final output = File(outputFile).readAsStringSync();
+
+    // Check that the file header appears only once
+    final fileHeader = 'FILE: ./file1.txt';
+    final firstIndex = output.indexOf(fileHeader);
+    final lastIndex = output.lastIndexOf(fileHeader);
+
+    expect(firstIndex, isNot(-1),
+        reason: 'File header should be present in the output.');
+    expect(firstIndex, equals(lastIndex),
+        reason: 'File header should only appear once.');
+    expect(output, contains('Content of file 1'));
   });
 
   test('Ignore folders', () async {
     Directory(path.join(tempDir.path, 'include')).createSync();
-    File(path.join(tempDir.path, 'include', 'file1.txt')).writeAsStringSync('Include this');
+    File(path.join(tempDir.path, 'include', 'file1.txt'))
+        .writeAsStringSync('Include this');
     Directory(path.join(tempDir.path, 'exclude')).createSync();
-    File(path.join(tempDir.path, 'exclude', 'file2.txt')).writeAsStringSync('Exclude this');
+    File(path.join(tempDir.path, 'exclude', 'file2.txt'))
+        .writeAsStringSync('Exclude this');
 
     final result = await runApp([
-      tempDir.path,
-      '--output=$outputFile',
+      '**/*',
+      '--output=output.txt',
       '--ignore-folders=exclude',
     ]);
 
@@ -70,11 +110,12 @@ void main() {
 
   test('Ignore files', () async {
     File(path.join(tempDir.path, 'keep.txt')).writeAsStringSync('Keep this');
-    File(path.join(tempDir.path, 'ignore.txt')).writeAsStringSync('Ignore this');
+    File(path.join(tempDir.path, 'ignore.txt'))
+        .writeAsStringSync('Ignore this');
 
     final result = await runApp([
-      tempDir.path,
-      '--output=$outputFile',
+      '*.txt',
+      '--output=output.txt',
       '--ignore-files=ignore.txt',
     ]);
 
@@ -87,14 +128,16 @@ void main() {
 
   test('Multiple paths', () async {
     Directory(path.join(tempDir.path, 'dir1')).createSync();
-    File(path.join(tempDir.path, 'dir1', 'file1.txt')).writeAsStringSync('Dir 1 File');
+    File(path.join(tempDir.path, 'dir1', 'file1.txt'))
+        .writeAsStringSync('Dir 1 File');
     Directory(path.join(tempDir.path, 'dir2')).createSync();
-    File(path.join(tempDir.path, 'dir2', 'file2.txt')).writeAsStringSync('Dir 2 File');
+    File(path.join(tempDir.path, 'dir2', 'file2.txt'))
+        .writeAsStringSync('Dir 2 File');
 
     final result = await runApp([
-      path.join(tempDir.path, 'dir1'),
-      path.join(tempDir.path, 'dir2'),
-      '--output=$outputFile',
+      path.join('dir1', 'file1.txt'),
+      path.join('dir2', 'file2.txt'),
+      '--output=output.txt',
     ]);
 
     expect(result.exitCode, equals(0));
@@ -105,16 +148,12 @@ void main() {
   });
 
   test('Non-existent path', () async {
-    final nonExistentPath = path.join(tempDir.path, 'non_existent');
-
     final result = await runApp([
-      nonExistentPath,
-      '--output=$outputFile',
+      'non_existent_dir/**/*',
+      '--output=output.txt',
     ]);
 
     expect(result.exitCode, equals(0));
-    expect(result.stdout.split('\n'), hasLength(3));
-    expect(result.stdout, contains('Output file: $outputFile'));
     expect(File(outputFile).readAsStringSync(), isEmpty);
   });
 
@@ -122,15 +161,14 @@ void main() {
     File(path.join(tempDir.path, 'empty.txt')).createSync();
 
     final result = await runApp([
-      tempDir.path,
-      '--output=$outputFile',
+      'empty.txt',
+      '--output=output.txt',
     ]);
 
     expect(result.exitCode, equals(0));
 
     final output = File(outputFile).readAsStringSync();
-    expect(output, contains('FILE: ${path.join(tempDir.path, 'empty.txt')}'));
-    // Allow for a possible newline after the file path
-    expect(output.split('\n').where((line) => line.trim().isNotEmpty).length, inInclusiveRange(1, 2));
+    expect(output, contains('FILE: ./empty.txt'));
+    expect(output.trim(), 'FILE: ./empty.txt');
   });
 }

@@ -6,18 +6,28 @@ import 'package:glob/list_local_fs.dart';
 
 Future<void> main(List<String> arguments) async {
   final parser = ArgParser()
-    ..addOption('output', defaultsTo: 'output.txt', help: 'Specifies the output file name')
-    ..addOption('ignore-extensions', help: 'Specifies file extensions to ignore (comma separated)')
-    ..addMultiOption('ignore-folders', help: 'Specifies folders to globally ignore (can be used multiple times)')
-    ..addMultiOption('ignore-files', help: 'Specifies files to globally ignore (can be used multiple times)');
+    ..addOption('output',
+        defaultsTo: 'output.txt', help: 'Specifies the output file name')
+    ..addOption('ignore-extensions',
+        help: 'Specifies file extensions to ignore (comma separated)')
+    ..addMultiOption('ignore-folders',
+        help:
+            'Specifies folders to globally ignore (can be used multiple times)')
+    ..addMultiOption('ignore-files',
+        help:
+            'Specifies files to globally ignore (can be used multiple times)');
 
   final argResults = parser.parse(arguments);
 
   final paths = argResults.rest;
   final outputFile = argResults['output'] as String;
-  final ignoreExtensions = (argResults['ignore-extensions'] as String? ?? '').split(',');
+  final ignoreExtensions = (argResults['ignore-extensions'] as String? ?? '')
+      .split(',')
+      .where((s) => s.isNotEmpty)
+      .toList();
   final ignoreFolders = argResults['ignore-folders'] as List<String>;
-  final ignoreFiles = argResults['ignore-files'] as List<String>;
+  final ignoreFiles =
+      (argResults['ignore-files'] as List<String>).toList(); // Make it mutable
 
   if (paths.isEmpty) {
     print('Usage: dart run main.dart [options] <path1> <path2> ...');
@@ -25,13 +35,15 @@ Future<void> main(List<String> arguments) async {
     exit(0);
   }
 
+  // Ensure the output file itself is never processed.
+  ignoreFiles.add(path.basename(outputFile));
+
   final outputFileStream = File(outputFile).openWrite();
+  final processedFilePaths = <String>{};
 
   final futures = paths.map((pathPattern) {
-    final absolutePathPattern = path.isAbsolute(pathPattern)
-        ? pathPattern
-        : path.join(Directory.current.path, pathPattern);
-    return processPath(absolutePathPattern, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles);
+    return processPath(pathPattern, outputFileStream, outputFile,
+        ignoreExtensions, ignoreFolders, ignoreFiles, processedFilePaths);
   });
 
   await Future.wait(futures);
@@ -40,42 +52,41 @@ Future<void> main(List<String> arguments) async {
   print('\nOutput file: $outputFile');
 }
 
-Future<void> processPath(String pathPattern, IOSink outputFileStream, String outputFile,
-    List<String> ignoreExtensions, List<String> ignoreFolders, List<String> ignoreFiles) async {
-  final glob = Glob(pathPattern);
-  final rootDir = path.dirname(pathPattern);
+Future<void> processPath(
+    String pathPattern,
+    IOSink outputFileStream,
+    String outputFile,
+    List<String> ignoreExtensions,
+    List<String> ignoreFolders,
+    List<String> ignoreFiles,
+    Set<String> processedFilePaths) async {
+  // Use case-insensitive matching for better cross-platform compatibility.
+  final glob = Glob(pathPattern, caseSensitive: false);
 
-  // Process files in the root directory
-  final rootDirEntity = Directory(rootDir);
-  if (await rootDirEntity.exists()) {
-    final entities = await rootDirEntity.list().toList();
-    final fileFutures = entities.map((entity) async {
-      if (entity is File && glob.matches(entity.path)) {
-        await processFile(entity, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles);
-      }
-    });
-    await Future.wait(fileFutures);
-  }
-
-  // Process files in subdirectories
-  final entities = await glob.list().toList();
-  final futures = entities.map((entity) async {
+  // glob.list() efficiently finds all matching entities without needing manual recursion.
+  await for (final entity in glob.list()) {
     if (entity is File) {
-      await processFile(entity as File, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles);
-    } else if (entity is Directory) {
-      await processPath(path.join(entity.path, '**'), outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles);
+      await processFile(entity as File, outputFileStream, outputFile,
+          ignoreExtensions, ignoreFolders, ignoreFiles, processedFilePaths);
     }
-  });
-  await Future.wait(futures);
+  }
 }
 
-Future<void> processFile(File file, IOSink outputFileStream, String outputFile,
-    List<String> ignoreExtensions, List<String> ignoreFolders, List<String> ignoreFiles) async {
-  final filename = path.basename(file.path);
-
-  if (file.path == outputFile || path.basename(file.path) == outputFile) {
+Future<void> processFile(
+    File file,
+    IOSink outputFileStream,
+    String outputFile,
+    List<String> ignoreExtensions,
+    List<String> ignoreFolders,
+    List<String> ignoreFiles,
+    Set<String> processedFilePaths) async {
+  // Use the file's absolute path for reliable duplicate checking.
+  final absolutePath = file.absolute.path;
+  if (processedFilePaths.contains(absolutePath)) {
     return;
   }
+
+  final filename = path.basename(file.path);
 
   if (ignoreFiles.contains(filename)) {
     return;
@@ -88,12 +99,18 @@ Future<void> processFile(File file, IOSink outputFileStream, String outputFile,
     return;
   }
 
-  if (ignoreFolders.any((ignoredFolder) => file.path.contains(ignoredFolder))) {
+  // Check if any part of the path is an ignored folder.
+  final pathSegments = file.path.split(path.separator);
+  if (ignoreFolders.any((ignored) => pathSegments.contains(ignored))) {
     return;
   }
 
+  // Add the file to the processed set before any async operation to prevent race conditions.
+  processedFilePaths.add(absolutePath);
+
   try {
     final String fileContent = await file.readAsString();
+    // Use the original path from glob for a user-friendly output header.
     print('Adding file ${file.path}');
     outputFileStream.writeln('FILE: ${file.path}');
     outputFileStream.write(fileContent);

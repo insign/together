@@ -1,7 +1,7 @@
 name: together
 description: A tool to merge text/code files in a folder
 
-version: 0.0.1
+version: 2.2.1
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
