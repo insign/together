@@ -1,12 +1,12 @@
 name: together
 description: A tool to merge text/code files in a folder
-version: 2.5.1
+version: 2.5.2
 repository: https://github.com/insign/together
 executables:
   tog:
 
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   args: ^2.4.2

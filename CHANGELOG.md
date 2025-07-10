@@ -1,3 +1,5 @@
+## v2.5.2
+- fix tests filenames
 ## v2.5.1
 - fix tests filenames
 ## v2.5.0

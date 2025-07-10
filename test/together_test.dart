@@ -17,7 +17,7 @@ void main() {
 
   Future<ProcessResult> runApp(List<String> args) async {
     // Construct an absolute path to main.dart, assuming tests are run from project root.
-    final mainScriptPath = path.join(Directory.current.path, 'main.dart');
+    final mainScriptPath = path.join(Directory.current.path, 'bin/tog.dart');
     return await Process.run(
       'dart',
       ['run', mainScriptPath, ...args],
@@ -27,10 +27,13 @@ void main() {
 
   test('Basic functionality', () async {
     // Create test files
-    File(path.join(tempDir.path, 'file1.txt')).writeAsStringSync('Content of file 1');
-    File(path.join(tempDir.path, 'file2.dart')).writeAsStringSync('Content of file 2');
+    File(path.join(tempDir.path, 'file1.txt'))
+        .writeAsStringSync('Content of file 1');
+    File(path.join(tempDir.path, 'file2.dart'))
+        .writeAsStringSync('Content of file 2');
     Directory(path.join(tempDir.path, 'subdir')).createSync();
-    File(path.join(tempDir.path, 'subdir', 'file3.txt')).writeAsStringSync('Content of file 3');
+    File(path.join(tempDir.path, 'subdir', 'file3.txt'))
+        .writeAsStringSync('Content of file 3');
 
     // Run the application using a glob pattern
     final result = await runApp([
@@ -56,7 +59,8 @@ void main() {
 
   test('Does not process the same file twice', () async {
     // Create a test file
-    File(path.join(tempDir.path, 'file1.txt'))..writeAsStringSync('Content of file 1');
+    File(path.join(tempDir.path, 'file1.txt'))
+      ..writeAsStringSync('Content of file 1');
 
     // Run the application with two arguments that match the same file
     final result = await runApp([
@@ -76,16 +80,20 @@ void main() {
     final firstIndex = output.indexOf(fileHeader);
     final lastIndex = output.lastIndexOf(fileHeader);
 
-    expect(firstIndex, isNot(-1), reason: 'File header should be present in the output.');
-    expect(firstIndex, equals(lastIndex), reason: 'File header should only appear once.');
+    expect(firstIndex, isNot(-1),
+        reason: 'File header should be present in the output.');
+    expect(firstIndex, equals(lastIndex),
+        reason: 'File header should only appear once.');
     expect(output, contains('Content of file 1'));
   });
 
   test('Ignore folders', () async {
     Directory(path.join(tempDir.path, 'include')).createSync();
-    File(path.join(tempDir.path, 'include', 'file1.txt')).writeAsStringSync('Include this');
+    File(path.join(tempDir.path, 'include', 'file1.txt'))
+        .writeAsStringSync('Include this');
     Directory(path.join(tempDir.path, 'exclude')).createSync();
-    File(path.join(tempDir.path, 'exclude', 'file2.txt')).writeAsStringSync('Exclude this');
+    File(path.join(tempDir.path, 'exclude', 'file2.txt'))
+        .writeAsStringSync('Exclude this');
 
     final result = await runApp([
       '**/*',
@@ -102,7 +110,8 @@ void main() {
 
   test('Ignore files', () async {
     File(path.join(tempDir.path, 'keep.txt')).writeAsStringSync('Keep this');
-    File(path.join(tempDir.path, 'ignore.txt')).writeAsStringSync('Ignore this');
+    File(path.join(tempDir.path, 'ignore.txt'))
+        .writeAsStringSync('Ignore this');
 
     final result = await runApp([
       '*.txt',
@@ -130,16 +139,21 @@ void main() {
 
     // Create files and directories to be ignored
     Directory(path.join(tempDir.path, 'ignored_dir')).createSync();
-    File(path.join(tempDir.path, 'ignored_dir', 'test.txt')).writeAsStringSync('Should be ignored by dir rule');
-    File(path.join(tempDir.path, 'app.log')).writeAsStringSync('Should be ignored by extension rule');
+    File(path.join(tempDir.path, 'ignored_dir', 'test.txt'))
+        .writeAsStringSync('Should be ignored by dir rule');
+    File(path.join(tempDir.path, 'app.log'))
+        .writeAsStringSync('Should be ignored by extension rule');
     File(path.join(tempDir.path, 'specific_file_to_ignore.txt'))
         .writeAsStringSync('Should be ignored by specific file rule');
     Directory(path.join(tempDir.path, 'lib')).createSync();
-    File(path.join(tempDir.path, 'lib', 'nested.log')).writeAsStringSync('Should be ignored by nested extension rule');
+    File(path.join(tempDir.path, 'lib', 'nested.log'))
+        .writeAsStringSync('Should be ignored by nested extension rule');
 
     // Create files to be included
-    File(path.join(tempDir.path, 'main.dart')).writeAsStringSync('Should be included');
-    File(path.join(tempDir.path, 'lib', 'code.txt')).writeAsStringSync('Should be included also');
+    File(path.join(tempDir.path, 'main.dart'))
+        .writeAsStringSync('Should be included');
+    File(path.join(tempDir.path, 'lib', 'code.txt'))
+        .writeAsStringSync('Should be included also');
 
     final result = await runApp([
       '**/*', // Process all files recursively
@@ -158,9 +172,11 @@ void main() {
 
   test('Multiple paths', () async {
     Directory(path.join(tempDir.path, 'dir1')).createSync();
-    File(path.join(tempDir.path, 'dir1', 'file1.txt')).writeAsStringSync('Dir 1 File');
+    File(path.join(tempDir.path, 'dir1', 'file1.txt'))
+        .writeAsStringSync('Dir 1 File');
     Directory(path.join(tempDir.path, 'dir2')).createSync();
-    File(path.join(tempDir.path, 'dir2', 'file2.txt')).writeAsStringSync('Dir 2 File');
+    File(path.join(tempDir.path, 'dir2', 'file2.txt'))
+        .writeAsStringSync('Dir 2 File');
 
     final result = await runApp([
       path.join('dir1', 'file1.txt'),
