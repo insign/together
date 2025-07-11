@@ -3,17 +3,26 @@ import 'package:args/args.dart';
 import 'package:path/path.dart' as path;
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
+import 'package:together/pubspec.dart' as pubspec;
 
 Future<void> main(List<String> arguments) async {
+  if (arguments.isNotEmpty && (arguments.first == '-v' || arguments.first == '--version')) {
+    _showVersion(arguments);
+  }
+
   final parser = ArgParser()
     ..addOption('output', defaultsTo: 'output.txt', help: 'Specifies the output file name')
     ..addOption('ignore-extensions', help: 'Specifies file extensions to ignore (comma separated)')
     ..addMultiOption('ignore-folders', help: 'Specifies folders to globally ignore (can be used multiple times)')
     ..addMultiOption('ignore-files', help: 'Specifies files to globally ignore (can be used multiple times)')
     ..addFlag('gitignore',
-        negatable: false, help: 'Ignores files and directories based on the .gitignore file in the current directory.');
+        negatable: false, help: 'Ignores files and directories based on the .gitignore file in the current directory.')
+    ..addFlag('version', abbr: 'v', negatable: false, help: 'Show the version of ${pubspec.name}.');
 
   final argResults = parser.parse(arguments);
+  if (argResults['version'] as bool) {
+    _showVersion(arguments);
+  }
 
   final paths = argResults.rest;
   final outputFile = argResults['output'] as String;
@@ -70,6 +79,20 @@ Future<void> main(List<String> arguments) async {
 
   await outputFileStream.close();
   print('\nOutput file: $outputFile');
+}
+
+Never _showVersion(List<String> args) {
+  final version = pubspec.version;
+
+  if (args.first == '-v') {
+    print(version);
+  } else {
+    final name = pubspec.name;
+    final desc = pubspec.description.split('.').first;
+    print('$name v$version - $desc');
+  }
+
+  exit(0);
 }
 
 Future<void> processPath(

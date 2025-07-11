@@ -1,3 +1,5 @@
+## v2.5.5
+- Add version flag and pubspec constants generation
 ## v2.5.4
 - Move main.dart to bin/tog.dart and fix path references
 ## v2.5.3

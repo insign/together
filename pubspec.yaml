@@ -1,6 +1,6 @@
 name: together
 description: A tool to merge text/code files in a folder
-version: 2.5.4
+version: 2.5.5
 repository: https://github.com/insign/together
 executables:
   tog:
@@ -13,3 +13,6 @@ dependencies:
   glob: ^2.1.2
   path: ^1.9.0
   test: ^1.25.8
+
+dev_dependencies:
+  yaml2dart: ^1.5.0

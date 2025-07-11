@@ -1,19 +1,22 @@
-.PHONY: test build clean ai dev bin
+.PHONY: test build clean ai dev bin gen
 .DEFAULT_GOAL := bin
 NICK = tog
 
 tog:
-	tog * --ignore-folders=.dart_tool,.github,build,.idea,.git --ignore-extensions=lock --ignore-files=LICENSE.md,makefile,.gitignore
+	dart run bin/tog.dart * **/* --gitignore --ignore-extensions=lock --ignore-files=LICENSE.md,makefile,.gitignore
 
 dev:
 	dart compile exe -o ~/bin/$(NICK) bin/tog.dart
 
-test:
+gen:
+	dart run yaml2dart pubspec.yaml lib/pubspec.dart
+
+test: gen
 	dart pub get
 	dart analyze --fatal-warnings
 	dart test --exclude-tags=skip-ci
 
-build:
+build: gen
 	dart pub get
 	mkdir -p build
 ifeq ($(OS),Windows_NT)
