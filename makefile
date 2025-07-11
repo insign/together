@@ -3,27 +3,24 @@
 NICK = tog
 
 tog:
-	dart run bin/tog.dart * **/* --gitignore --ignore-extensions=lock --ignore-files=LICENSE.md,makefile,.gitignore
+	dart run bin/$(NICK).dart * **/* --gitignore --ignore-extensions=lock --ignore-files=LICENSE.md,makefile,.gitignore
 
 dev:
-	dart compile exe -o ~/bin/$(NICK) bin/tog.dart
+	dart compile exe -o ~/bin/$(NICK) bin/$(NICK).dart
 
-gen:
-	dart run yaml2dart pubspec.yaml lib/pubspec.dart
-
-test: gen
+test:
 	dart pub get
 	dart analyze --fatal-warnings
 	dart test --exclude-tags=skip-ci
 
-build: gen
+build:
 	dart pub get
 	mkdir -p build
 ifeq ($(OS),Windows_NT)
-	dart compile exe bin/tog.dart -o build/$(NICK)-windows-$(PROCESSOR_ARCHITECTURE)
+	dart compile exe bin/$(NICK).dart -o build/$(NICK)-windows-$(PROCESSOR_ARCHITECTURE)
 	gzip --best --keep build/$(NICK)-windows-$(PROCESSOR_ARCHITECTURE)
 else
-	dart compile exe bin/tog.dart -o build/$(NICK)-$$(uname -s | tr '[:upper:]' '[:lower:]')-$$(uname -m)
+	dart compile exe bin/$(NICK).dart -o build/$(NICK)-$$(uname -s | tr '[:upper:]' '[:lower:]')-$$(uname -m)
 	gzip --best --keep build/$(NICK)-$$(uname -s | tr '[:upper:]' '[:lower:]')-$$(uname -m)
 endif
 
@@ -31,4 +28,4 @@ clean:
 	rm -rf build
 
 bin:
-	dart compile exe -o ~/bin/$(NICK) bin/tog.dart
+	dart compile exe -o ~/bin/$(NICK) bin/$(NICK).dart

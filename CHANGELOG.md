@@ -1,3 +1,5 @@
+## v2.5.6
+- makefile fixes for make test
 ## v2.5.5
 - Add version flag and pubspec constants generation
 ## v2.5.4
