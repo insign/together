@@ -10,7 +10,7 @@ You can manually specify every file or folder to ignore. This is powerful but ca
 
 ```bash
 tog \
-    /path/to/project/** \
+    '/path/to/project/**' \
     --output=ai.txt \
     --ignore-folders=vendor \
     --ignore-folders=test_files \
@@ -35,7 +35,7 @@ LICENSE.md
 
 Then, the command becomes simple and reusable:
 ```bash
-tog /path/to/project/** --output=ai.txt --gitignore
+tog '/path/to/project/**' --output=ai.txt --gitignore
 ```
 
 ## Personal usage on this project
@@ -58,10 +58,13 @@ Output file: ai.txt
 1. Download the binary for your OS from the [releases page](//github.com/insign/together/releases).
 2. Make it executable: `chmod +x /path/to/downloaded/tog`
 3. (Optional) Move it to a directory in your PATH: `mv /path/to/downloaded/tog /usr/local/bin/`
-4. Run it from your terminal: `tog <path1> <path2> ... [options]`
+4. Run it from your terminal: `tog '<path1>' '<path2>' ... [options]`
+
+> **Important Note on Glob Patterns:**
+> Always wrap glob patterns (paths containing `*` or `**`) in single quotes (e.g., `'src/**/*.dart'`). This prevents your shell (like Bash or ZSH) from expanding the pattern itself, ensuring that `tog` receives it correctly and can search recursively as intended.
 
 ```
-<path>                 Specifies paths to process. Use glob patterns for more control.
+<path>                 Specifies paths to process. Use single quotes for glob patterns (e.g., 'src/**') to ensure correct expansion.
 --output               Specifies the output file name
                        (defaults to "output.txt")
 --ignore-extensions    Specifies file extensions to ignore (comma separated)
@@ -73,22 +76,23 @@ Output file: ai.txt
 
 ## Glob Pattern Examples
 
-- `src/*.dart`: Match all Dart files directly inside the `src` directory.
-- `lib/docs/file.txt`: Process a single, specific file.
-- `assets/*`: Match all files and directories directly inside `assets` (e.g., `assets/logo.png`), but not in subdirectories (e.g., not `assets/icons/add.svg`).
-- `assets/**`: Match all files and directories inside `assets` and all of its subdirectories, recursively.
-- `**/*.dart`: Match all files ending with `.dart` in the current directory and all subdirectories.
-- `lib/{src,test}/*.dart`: Match Dart files in either the `src` or `test` subdirectories of `lib`.
-- `**/*.{js,ts}`: Match all JavaScript and TypeScript files in any subdirectory.
+The `**` pattern is powerful. It matches directories recursively. Using it correctly is key to leveraging `tog`.
+
+- `'src/*.dart'`: Match all Dart files directly inside the `src` directory.
+- `'lib/docs/file.txt'`: Process a single, specific file (quotes are optional but good practice).
+- `'assets/**'`: **The key pattern.** Match everything inside `assets`, including files in `assets` itself and in all subdirectories, recursively. This is the most common way to process an entire folder.
+- `'**/*.dart'`: Match all files ending with `.dart` in the current directory and all subdirectories.
+- `'api/app/Http/Controllers/**'`: Match all files and folders inside `Controllers`, recursively.
+- `'api/app/Http/Controllers/**/*.php'`: Match only files ending with `.php` inside `Controllers` and its subdirectories.
 
 ## Using Dart
 
 ### Run
-`dart run main.dart path/to/any/folder path/to/another/folder/* specific/file.txt`
+`dart run main.dart 'path/to/folder/**' 'specific/file.txt'`
 
 ### Compile
 `make` will compile the binary for your OS to `~/bin/tog`.
 
 ```bash
-tog path/to/any/folder path/to/another/folder/* specific/file.txt
+tog 'path/to/any/folder/**' 'specific/file.txt'
 ```
