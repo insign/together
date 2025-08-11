@@ -1,3 +1,5 @@
+## v2.7.0
+- release
 ## v2.6.0
 - release
 ## v2.5.6
