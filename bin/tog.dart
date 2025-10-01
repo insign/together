@@ -26,6 +26,13 @@ Future<void> main(List<String> arguments) async {
 
   final paths = argResults.rest;
   final outputFile = argResults['output'] as String;
+
+  // Garante que o diretório de saída exista
+  final outputDir = path.dirname(outputFile);
+  if (outputDir.isNotEmpty) {
+    await Directory(outputDir).create(recursive: true);
+  }
+
   final ignoreExtensions =
       (argResults['ignore-extensions'] as String? ?? '').split(',').where((s) => s.isNotEmpty).toList();
   final ignoreFolders = argResults['ignore-folders'] as List<String>;
