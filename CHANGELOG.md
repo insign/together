@@ -1,3 +1,5 @@
+## v2.10.0
+- release
 ## v2.9.0
 - Add --ignore-wild flag to ignore files/folders matching wildcard patterns (e.g., *react*, *test*)
 - Add --help/-h flag to display usage information

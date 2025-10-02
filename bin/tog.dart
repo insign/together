@@ -8,37 +8,22 @@ import 'package:http/http.dart' as http;
 import 'package:together/pubspec.dart' as pubspec;
 
 Future<void> main(List<String> arguments) async {
-  if (arguments.isNotEmpty &&
-      (arguments.first == '-v' || arguments.first == '--version')) {
+  if (arguments.isNotEmpty && (arguments.first == '-v' || arguments.first == '--version')) {
     _showVersion(arguments);
   }
 
   final parser = ArgParser()
-    ..addOption('output',
-        defaultsTo: 'output.txt', help: 'Specifies the output file name')
-    ..addOption('ignore-extensions',
-        help: 'Specifies file extensions to ignore (comma separated)')
-    ..addMultiOption('ignore-folders',
-        help:
-            'Specifies folders to globally ignore (can be used multiple times)')
-    ..addMultiOption('ignore-files',
-        help: 'Specifies files to globally ignore (can be used multiple times)')
+    ..addOption('output', defaultsTo: 'output.txt', help: 'Specifies the output file name')
+    ..addOption('ignore-extensions', help: 'Specifies file extensions to ignore (comma separated)')
+    ..addMultiOption('ignore-folders', help: 'Specifies folders to globally ignore (can be used multiple times)')
+    ..addMultiOption('ignore-files', help: 'Specifies files to globally ignore (can be used multiple times)')
     ..addMultiOption('ignore-wild',
-        help:
-            'Specifies wildcard patterns to ignore files/folders (can be used multiple times, e.g., *react*)')
+        help: 'Specifies wildcard patterns to ignore files/folders (can be used multiple times, e.g., *react*)')
     ..addFlag('gitignore',
-        negatable: false,
-        help:
-            'Ignores files and directories based on the .gitignore file in the current directory.')
-    ..addFlag('version',
-        abbr: 'v',
-        negatable: false,
-        help: 'Show the version of ${pubspec.name}.')
-    ..addFlag('help',
-        abbr: 'h', negatable: false, help: 'Show this help message.')
-    ..addFlag('self-update',
-        negatable: false,
-        help: 'Download and install the latest version from GitHub.');
+        negatable: false, help: 'Ignores files and directories based on the .gitignore file in the current directory.')
+    ..addFlag('version', abbr: 'v', negatable: false, help: 'Show the version of ${pubspec.name}.')
+    ..addFlag('help', abbr: 'h', negatable: false, help: 'Show this help message.')
+    ..addFlag('self-update', negatable: false, help: 'Download and install the latest version from GitHub.');
 
   final argResults = parser.parse(arguments);
   if (argResults['version'] as bool) {
@@ -62,13 +47,10 @@ Future<void> main(List<String> arguments) async {
     await Directory(outputDir).create(recursive: true);
   }
 
-  final ignoreExtensions = (argResults['ignore-extensions'] as String? ?? '')
-      .split(',')
-      .where((s) => s.isNotEmpty)
-      .toList();
+  final ignoreExtensions =
+      (argResults['ignore-extensions'] as String? ?? '').split(',').where((s) => s.isNotEmpty).toList();
   final ignoreFolders = argResults['ignore-folders'] as List<String>;
-  final ignoreFiles =
-      (argResults['ignore-files'] as List<String>).toList(); // Make it mutable
+  final ignoreFiles = (argResults['ignore-files'] as List<String>).toList(); // Make it mutable
   final ignoreWild = argResults['ignore-wild'] as List<String>;
 
   if (paths.isEmpty) {
@@ -98,8 +80,7 @@ Future<void> main(List<String> arguments) async {
         }
       }
     } else {
-      print(
-          "Warning: --gitignore flag was used, but .gitignore file not found in the current directory.");
+      print("Warning: --gitignore flag was used, but .gitignore file not found in the current directory.");
     }
   }
 
@@ -110,16 +91,8 @@ Future<void> main(List<String> arguments) async {
   final processedFilePaths = <String>{};
 
   final futures = paths.map((pathPattern) {
-    return processPath(
-        pathPattern,
-        outputFileStream,
-        outputFile,
-        ignoreExtensions,
-        ignoreFolders,
-        ignoreFiles,
-        ignoreWild,
-        gitignoreGlobs,
-        processedFilePaths);
+    return processPath(pathPattern, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles,
+        ignoreWild, gitignoreGlobs, processedFilePaths);
   });
 
   await Future.wait(futures);
@@ -148,8 +121,7 @@ Future<void> _selfUpdate() async {
     );
 
     if (response.statusCode != 200) {
-      print(
-          'Error: Failed to fetch release information (HTTP ${response.statusCode})');
+      print('Error: Failed to fetch release information (HTTP ${response.statusCode})');
       exit(1);
     }
 
@@ -205,8 +177,7 @@ Future<void> _selfUpdate() async {
     // Download the new binary
     final downloadResponse = await http.get(Uri.parse(downloadUrl));
     if (downloadResponse.statusCode != 200) {
-      print(
-          'Error: Failed to download binary (HTTP ${downloadResponse.statusCode})');
+      print('Error: Failed to download binary (HTTP ${downloadResponse.statusCode})');
       exit(1);
     }
 
@@ -351,16 +322,8 @@ Future<void> processPath(
   // glob.list() efficiently finds all matching entities without needing manual recursion.
   await for (final entity in glob.list()) {
     if (entity is File) {
-      await processFile(
-          entity as File,
-          outputFileStream,
-          outputFile,
-          ignoreExtensions,
-          ignoreFolders,
-          ignoreFiles,
-          ignoreWild,
-          gitignoreGlobs,
-          processedFilePaths);
+      await processFile(entity as File, outputFileStream, outputFile, ignoreExtensions, ignoreFolders, ignoreFiles,
+          ignoreWild, gitignoreGlobs, processedFilePaths);
     }
   }
 }
