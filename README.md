@@ -185,8 +185,8 @@ If `tog` command is not found after installation:
    ```bash
    # For bash users
    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
-   
-   # For zsh users  
+
+   # For zsh users
    echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
    ```
 
