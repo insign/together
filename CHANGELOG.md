@@ -1,3 +1,7 @@
+## v2.9.0
+- Add --ignore-wild flag to ignore files/folders matching wildcard patterns (e.g., *react*, *test*)
+- Add --help/-h flag to display usage information
+- Add --self-update flag to automatically download and install latest version from GitHub
 ## v2.8.0
 - fix #12
 ## v2.7.0

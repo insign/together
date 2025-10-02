@@ -16,7 +16,9 @@ tog \
     --ignore-folders=test_files \
     --ignore-folders=bin \
     --ignore-extensions=lock,bash \
-    --ignore-files=LICENSE.md
+    --ignore-files=LICENSE.md \
+    --ignore-wild='*react*' \
+    --ignore-wild='*test*'
 ```
 
 ### Example: Using a .gitignore file (Recommended)
@@ -37,6 +39,48 @@ Then, the command becomes simple and reusable:
 ```bash
 tog '/path/to/project/**' --output=ai.txt --gitignore
 ```
+
+### Example: Using Wildcard Patterns
+You can use wildcard patterns to ignore files or folders that match specific patterns anywhere in their path:
+
+```bash
+# Ignore any file or folder containing 'react' in the name
+tog '/path/to/project/**' --output=ai.txt --ignore-wild='*react*'
+
+# Ignore multiple patterns
+tog '/path/to/project/**' --output=ai.txt --ignore-wild='*test*' --ignore-wild='*spec*' --ignore-wild='*node_modules*'
+
+# Combine with other ignore options
+tog '/path/to/project/**' --output=ai.txt --ignore-wild='*react*' --ignore-extensions=log,tmp
+
+# Common use cases with --ignore-wild
+# Ignore all Node.js related files and folders
+tog '/path/to/project/**' --output=ai.txt --ignore-wild='*node_modules*' --ignore-wild='*package-lock*'
+
+# Ignore all test-related files
+tog '/path/to/project/**' --output=ai.txt --ignore-wild='*test*' --ignore-wild='*spec*' --ignore-wild='*__tests__*'
+
+# Ignore build artifacts and cache files
+tog '/path/to/project/**' --output=ai.txt --ignore-wild='*build*' --ignore-wild='*dist*' --ignore-wild='*cache*' --ignore-wild='*.tmp*'
+
+# Ignore framework-specific files (React, Vue, Angular)
+tog '/path/to/project/**' --output=ai.txt --ignore-wild='*react*' --ignore-wild='*vue*' --ignore-wild='*angular*'
+```
+
+### Example: Self-Update
+Keep your `tog` binary up to date with the latest version from GitHub:
+
+```bash
+# Check for updates and install the latest version
+tog --self-update
+```
+
+The self-update feature will:
+- Check the latest release on GitHub
+- Download the appropriate binary for your operating system (Linux, macOS, or Windows)
+- Create a backup of the current version
+- Replace the current binary atomically
+- Clean up temporary files
 
 ## Personal usage on this project
 > Since I do this a lot of times, I use a [makefile](Makefile) on every project. The command below uses the project's own `.gitignore` to exclude development files.
@@ -70,8 +114,11 @@ Output file: ai.txt
 --ignore-extensions    Specifies file extensions to ignore (comma separated)
 --ignore-folders       Specifies folders to globally ignore (can be used multiple times)
 --ignore-files         Specifies files to globally ignore (can be used multiple times)
+--ignore-wild          Specifies wildcard patterns to ignore files/folders (can be used multiple times, e.g., *react*)
 --gitignore            Ignores files and directories based on the .gitignore file
                        in the current directory.
+-h, --help             Show this help message.
+--self-update          Download and install the latest version from GitHub.
 ```
 
 ## Glob Pattern Examples

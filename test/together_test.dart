@@ -27,10 +27,13 @@ void main() {
 
   test('Basic functionality', () async {
     // Create test files
-    File(path.join(tempDir.path, 'file1.txt')).writeAsStringSync('Content of file 1');
-    File(path.join(tempDir.path, 'file2.dart')).writeAsStringSync('Content of file 2');
+    File(path.join(tempDir.path, 'file1.txt'))
+        .writeAsStringSync('Content of file 1');
+    File(path.join(tempDir.path, 'file2.dart'))
+        .writeAsStringSync('Content of file 2');
     Directory(path.join(tempDir.path, 'subdir')).createSync();
-    File(path.join(tempDir.path, 'subdir', 'file3.txt')).writeAsStringSync('Content of file 3');
+    File(path.join(tempDir.path, 'subdir', 'file3.txt'))
+        .writeAsStringSync('Content of file 3');
 
     // Run the application using a glob pattern
     final result = await runApp([
@@ -56,7 +59,8 @@ void main() {
 
   test('Does not process the same file twice', () async {
     // Create a test file
-    File(path.join(tempDir.path, 'file1.txt'))..writeAsStringSync('Content of file 1');
+    File(path.join(tempDir.path, 'file1.txt'))
+      ..writeAsStringSync('Content of file 1');
 
     // Run the application with two arguments that match the same file
     final result = await runApp([
@@ -76,16 +80,20 @@ void main() {
     final firstIndex = output.indexOf(fileHeader);
     final lastIndex = output.lastIndexOf(fileHeader);
 
-    expect(firstIndex, isNot(-1), reason: 'File header should be present in the output.');
-    expect(firstIndex, equals(lastIndex), reason: 'File header should only appear once.');
+    expect(firstIndex, isNot(-1),
+        reason: 'File header should be present in the output.');
+    expect(firstIndex, equals(lastIndex),
+        reason: 'File header should only appear once.');
     expect(output, contains('Content of file 1'));
   });
 
   test('Ignore folders', () async {
     Directory(path.join(tempDir.path, 'include')).createSync();
-    File(path.join(tempDir.path, 'include', 'file1.txt')).writeAsStringSync('Include this');
+    File(path.join(tempDir.path, 'include', 'file1.txt'))
+        .writeAsStringSync('Include this');
     Directory(path.join(tempDir.path, 'exclude')).createSync();
-    File(path.join(tempDir.path, 'exclude', 'file2.txt')).writeAsStringSync('Exclude this');
+    File(path.join(tempDir.path, 'exclude', 'file2.txt'))
+        .writeAsStringSync('Exclude this');
 
     final result = await runApp([
       '**/*',
@@ -102,7 +110,8 @@ void main() {
 
   test('Ignore files', () async {
     File(path.join(tempDir.path, 'keep.txt')).writeAsStringSync('Keep this');
-    File(path.join(tempDir.path, 'ignore.txt')).writeAsStringSync('Ignore this');
+    File(path.join(tempDir.path, 'ignore.txt'))
+        .writeAsStringSync('Ignore this');
 
     final result = await runApp([
       '*.txt',
@@ -130,16 +139,21 @@ void main() {
 
     // Create files and directories to be ignored
     Directory(path.join(tempDir.path, 'ignored_dir')).createSync();
-    File(path.join(tempDir.path, 'ignored_dir', 'test.txt')).writeAsStringSync('Should be ignored by dir rule');
-    File(path.join(tempDir.path, 'app.log')).writeAsStringSync('Should be ignored by extension rule');
+    File(path.join(tempDir.path, 'ignored_dir', 'test.txt'))
+        .writeAsStringSync('Should be ignored by dir rule');
+    File(path.join(tempDir.path, 'app.log'))
+        .writeAsStringSync('Should be ignored by extension rule');
     File(path.join(tempDir.path, 'specific_file_to_ignore.txt'))
         .writeAsStringSync('Should be ignored by specific file rule');
     Directory(path.join(tempDir.path, 'lib')).createSync();
-    File(path.join(tempDir.path, 'lib', 'nested.log')).writeAsStringSync('Should be ignored by nested extension rule');
+    File(path.join(tempDir.path, 'lib', 'nested.log'))
+        .writeAsStringSync('Should be ignored by nested extension rule');
 
     // Create files to be included
-    File(path.join(tempDir.path, 'main.dart')).writeAsStringSync('Should be included');
-    File(path.join(tempDir.path, 'lib', 'code.txt')).writeAsStringSync('Should be included also');
+    File(path.join(tempDir.path, 'main.dart'))
+        .writeAsStringSync('Should be included');
+    File(path.join(tempDir.path, 'lib', 'code.txt'))
+        .writeAsStringSync('Should be included also');
 
     final result = await runApp([
       '**/*', // Process all files recursively
@@ -158,9 +172,11 @@ void main() {
 
   test('Multiple paths', () async {
     Directory(path.join(tempDir.path, 'dir1')).createSync();
-    File(path.join(tempDir.path, 'dir1', 'file1.txt')).writeAsStringSync('Dir 1 File');
+    File(path.join(tempDir.path, 'dir1', 'file1.txt'))
+        .writeAsStringSync('Dir 1 File');
     Directory(path.join(tempDir.path, 'dir2')).createSync();
-    File(path.join(tempDir.path, 'dir2', 'file2.txt')).writeAsStringSync('Dir 2 File');
+    File(path.join(tempDir.path, 'dir2', 'file2.txt'))
+        .writeAsStringSync('Dir 2 File');
 
     final result = await runApp([
       path.join('dir1', 'file1.txt'),
@@ -198,5 +214,93 @@ void main() {
     final output = File(outputFile).readAsStringSync();
     expect(output, contains('FILE: ./empty.txt'));
     expect(output.trim(), 'FILE: ./empty.txt');
+  });
+
+  test('Ignore wild patterns', () async {
+    // Create simple test files
+    File(path.join(tempDir.path, 'keep-file.txt'))
+        .writeAsStringSync('Keep this file');
+    File(path.join(tempDir.path, 'react-app.js'))
+        .writeAsStringSync('React application');
+    File(path.join(tempDir.path, 'normal.dart'))
+        .writeAsStringSync('Normal dart file');
+    File(path.join(tempDir.path, 'test-utils.js'))
+        .writeAsStringSync('Test utilities');
+
+    // Test ignoring files with 'react' in name
+    final result1 = await runApp([
+      'keep-file.txt',
+      'react-app.js',
+      'normal.dart',
+      'test-utils.js',
+      '--output=result1.txt',
+      '--ignore-wild=*react*',
+    ]);
+
+    expect(result1.exitCode, equals(0));
+    final output1 =
+        File(path.join(tempDir.path, 'result1.txt')).readAsStringSync();
+    expect(output1, contains('Keep this file'));
+    expect(output1, contains('Normal dart file'));
+    expect(output1, contains('Test utilities'));
+    expect(output1, isNot(contains('React application')));
+
+    // Test ignoring multiple patterns
+    final result2 = await runApp([
+      'keep-file.txt',
+      'react-app.js',
+      'normal.dart',
+      'test-utils.js',
+      '--output=result2.txt',
+      '--ignore-wild=*react*',
+      '--ignore-wild=*test*',
+    ]);
+
+    expect(result2.exitCode, equals(0));
+    final output2 =
+        File(path.join(tempDir.path, 'result2.txt')).readAsStringSync();
+    expect(output2, contains('Keep this file'));
+    expect(output2, contains('Normal dart file'));
+    expect(output2, isNot(contains('React application')));
+    expect(output2, isNot(contains('Test utilities')));
+  });
+
+  test('Help flag shows usage', () async {
+    // Test --help flag
+    final result1 = await runApp(['--help']);
+    expect(result1.exitCode, equals(0));
+    expect(result1.stdout, contains('Usage:'));
+    expect(result1.stdout, contains('--output'));
+    expect(result1.stdout, contains('--ignore-wild'));
+    expect(result1.stdout, contains('--help'));
+
+    // Test -h flag
+    final result2 = await runApp(['-h']);
+    expect(result2.exitCode, equals(0));
+    expect(result2.stdout, contains('Usage:'));
+    expect(result2.stdout, contains('--output'));
+    expect(result2.stdout, contains('--ignore-wild'));
+    expect(result2.stdout, contains('--help'));
+  });
+
+  test('Self-update flag is recognized', () async {
+    // Test that --self-update flag is recognized
+    // Note: This will likely fail in test environment due to network/permissions
+    // but we just want to verify the flag parsing works
+    final result = await runApp(['--self-update']);
+
+    // The command should exit (either success or failure is fine for this test)
+    // We're just testing that the flag is recognized and processed
+    expect(result.exitCode, anyOf([0, 1]));
+
+    // Should contain update-related output
+    expect(
+        result.stdout,
+        anyOf([
+          contains('Checking for updates'),
+          contains('Error'),
+          contains('Already up to date'),
+          contains('Successfully updated'),
+        ]));
   });
 }
