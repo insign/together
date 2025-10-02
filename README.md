@@ -97,12 +97,126 @@ Adding file ./tests.dart
 Output file: ai.txt
 ```
 
-# Usage
+# Installation
+
+## Quick Install (One-liner)
+
+Install or update `tog` with a single command:
+
+```bash
+# Automatic installer (recommended)
+curl -fsSL https://raw.githubusercontent.com/insign/together/main/install.sh | sh
+```
+
+Or using wget:
+```bash
+wget -qO- https://raw.githubusercontent.com/insign/together/main/install.sh | sh
+```
+
+### Direct One-liners (no script)
+
+**Linux:**
+```bash
+curl -L "https://github.com/insign/together/releases/latest/download/tog-linux-x86_64.gz" | gunzip > tog && chmod +x tog && sudo mv tog /usr/local/bin/
+```
+
+**macOS:**
+```bash
+curl -L "https://github.com/insign/together/releases/latest/download/tog-darwin-arm64.gz" | gunzip > tog && chmod +x tog && mv tog /usr/local/bin/
+```
+
+**Windows (PowerShell):**
+```powershell
+iwr -Uri "https://github.com/insign/together/releases/latest/download/tog-windows-amd64" -OutFile "tog.exe"
+```
+
+## Manual Installation
 
 1. Download the binary for your OS from the [releases page](//github.com/insign/together/releases).
 2. Make it executable: `chmod +x /path/to/downloaded/tog`
 3. (Optional) Move it to a directory in your PATH: `mv /path/to/downloaded/tog /usr/local/bin/`
-4. Run it from your terminal: `tog '<path1>' '<path2>' ... [options]`
+
+
+
+# Updates
+
+Keep your `tog` installation up to date:
+
+## Automatic Update
+```bash
+# Update to the latest version
+tog --self-update
+```
+
+## Reinstall with Script
+```bash
+# Reinstall/update using the installation script
+curl -fsSL https://raw.githubusercontent.com/insign/together/main/install.sh | sh
+```
+
+The `--self-update` command will:
+- Check for the latest version on GitHub
+- Download the appropriate binary for your OS
+- Create a backup of your current version
+- Replace the binary atomically
+- Clean up temporary files
+
+# Troubleshooting
+
+## Installation Issues
+
+### Permission Denied
+If you get permission errors when installing:
+```bash
+# Try installing to user directory
+mkdir -p ~/.local/bin
+curl -L "https://github.com/insign/together/releases/latest/download/tog-linux-x86_64.gz" | gunzip > ~/.local/bin/tog
+chmod +x ~/.local/bin/tog
+
+# Add to PATH
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
+### Command Not Found
+If `tog` command is not found after installation:
+1. Check if the installation directory is in your PATH: `echo $PATH`
+2. Add the directory to your PATH:
+   ```bash
+   # For bash users
+   echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+   
+   # For zsh users  
+   echo 'export PATH="/usr/local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+   ```
+
+### Self-Update Issues
+If `tog --self-update` fails:
+- Ensure you have write permissions to the tog binary location
+- Try running with sudo if installed system-wide: `sudo tog --self-update`
+- As alternative, reinstall using the installation script
+
+## Usage Issues
+
+### Glob Patterns Not Working
+Always wrap glob patterns in single quotes:
+```bash
+# ✓ Correct
+tog 'src/**/*.dart' --output=files.txt
+
+# ✗ Wrong (shell will expand the pattern)
+tog src/**/*.dart --output=files.txt
+```
+
+### Large File Processing
+For very large projects:
+- Use `--ignore-wild` to exclude unnecessary files: `--ignore-wild='*node_modules*'`
+- Use `--gitignore` to respect .gitignore rules
+- Consider using more specific glob patterns instead of `**/*`
+
+# Usage
+
+Run it from your terminal: `tog '<path1>' '<path2>' ... [options]`
 
 > **Important Note on Glob Patterns:**
 > Always wrap glob patterns (paths containing `*` or `**`) in single quotes (e.g., `'src/**/*.dart'`). This prevents your shell (like Bash or ZSH) from expanding the pattern itself, ensuring that `tog` receives it correctly and can search recursively as intended.
