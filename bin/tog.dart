@@ -101,6 +101,12 @@ Future<void> main(List<String> arguments) async {
   print('\nOutput file: $outputFile');
 }
 
+Never _showUsage(ArgParser parser) {
+  print('Usage: dart run main.dart [options] <path1> <path2> ...');
+  print(parser.usage);
+  exit(0);
+}
+
 Future<void> _selfUpdate() async {
   try {
     print('Checking for updates...');
@@ -284,12 +290,6 @@ List<String> _getPossibleBinaryNames() {
   }
 
   return possibleNames;
-}
-
-Never _showUsage(ArgParser parser) {
-  print('Usage: dart run main.dart [options] <path1> <path2> ...');
-  print(parser.usage);
-  exit(0);
 }
 
 Never _showVersion(List<String> args) {

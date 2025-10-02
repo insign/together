@@ -1,3 +1,5 @@
+## v2.10.1
+- fix usage flag bug
 ## v2.10.0
 - release
 ## v2.10.0
